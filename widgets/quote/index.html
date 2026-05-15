@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quote</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Defaults — overridden by URL params via JS */
+    :root {
+      --color: #111111;
+      --bg: transparent;
+      --font: Georgia, 'Times New Roman', serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root { --color: #eeeeee; }
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      overflow: hidden;
+      padding: 1.5rem;
+      cursor: default;
+      user-select: none;
+    }
+
+    #quote-wrap {
+      max-width: 680px;
+      width: 100%;
+      text-align: center;
+    }
+
+    #quote-wrap.animate {
+      animation: fadein 0.5s ease both;
+    }
+
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    #quote-text {
+      color: var(--color);
+      font-family: var(--font);
+      font-size: clamp(0.95rem, 3vw, 1.4rem);
+      font-style: italic;
+      line-height: 1.7;
+    }
+
+    #quote-author {
+      color: var(--color);
+      font-family: var(--font);
+      font-size: clamp(0.75rem, 2vw, 1rem);
+      font-style: normal;
+      margin-top: 0.9em;
+      opacity: 0.6;
+      letter-spacing: 0.03em;
+    }
+  </style>
+</head>
+<body>
+  <div id="quote-wrap">
+    <p id="quote-text"></p>
+    <p id="quote-author"></p>
+  </div>
+
+  <script>
+    /*
+     * URL Parameters
+     * ──────────────────────────────────────────────────
+     * color   Text color. Hex (with/without #) or CSS color name.
+     *         Example: color=222222  color=royalblue
+     *
+     * bg      Background color. Same format as color.
+     *         Example: bg=1a1a2e  bg=white
+     *         (default: transparent — recommended for Notion)
+     *
+     * font    Font-family string.
+     *         Example: font=Arial  font=Georgia
+     * ──────────────────────────────────────────────────
+     * Double-click anywhere to show the next quote.
+     * The daily quote resets automatically at midnight (UTC).
+     * ──────────────────────────────────────────────────
+     */
+
+    const params = new URLSearchParams(location.search);
+    const root   = document.documentElement;
+
+    function toColor(v) {
+      if (!v) return null;
+      return /^[0-9a-fA-F]{3,8}$/.test(v) ? '#' + v : v;
+    }
+
+    const color = toColor(params.get('color'));
+    const bg    = toColor(params.get('bg'));
+    const font  = params.get('font');
+
+    if (color) root.style.setProperty('--color', color);
+    if (bg)    root.style.setProperty('--bg', bg);
+    if (font)  root.style.setProperty('--font', font);
+
+    // ── Quote selection ──────────────────────────────
+
+    // Deterministic daily index: changes once per day at midnight UTC.
+    function dailyIndex(n) {
+      const daySeed = Math.floor(Date.now() / 86400000);
+      let h = (daySeed ^ 0xdeadbeef) >>> 0;
+      h = Math.imul(h ^ (h >>> 16), 0x45d9f3b) >>> 0;
+      h = Math.imul(h ^ (h >>> 16), 0x45d9f3b) >>> 0;
+      return (h ^ (h >>> 16)) % n;
+    }
+
+    let quotes   = [];
+    let offset   = 0; // incremented on each double-click
+
+    const wrap     = document.getElementById('quote-wrap');
+    const textEl   = document.getElementById('quote-text');
+    const authorEl = document.getElementById('quote-author');
+
+    function showQuote(idx) {
+      const q = quotes[idx];
+      // Restart CSS animation
+      wrap.classList.remove('animate');
+      void wrap.offsetWidth;
+      wrap.classList.add('animate');
+      textEl.textContent   = q.text;
+      authorEl.textContent = '— ' + q.author;
+    }
+
+    document.body.addEventListener('dblclick', () => {
+      if (!quotes.length) return;
+      offset = (offset + 1) % quotes.length;
+      showQuote((dailyIndex(quotes.length) + offset) % quotes.length);
+    });
+
+    fetch('quotes.json')
+      .then(r => r.json())
+      .then(data => {
+        quotes = data;
+        showQuote(dailyIndex(quotes.length));
+      })
+      .catch(() => {
+        textEl.textContent = 'Could not load quotes.json';
+      });
+  </script>
+</body>
+</html>
