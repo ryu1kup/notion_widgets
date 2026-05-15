@@ -16,6 +16,7 @@
       --color: #000000;
       --bg: transparent;
       --font: Georgia, 'Times New Roman', serif;
+      --fontsize: clamp(0.95rem, 3vw, 1.4rem);
     }
 
     @media (prefers-color-scheme: dark) {
@@ -39,7 +40,6 @@
     }
 
     #quote-wrap {
-      max-width: 680px;
       width: 100%;
       text-align: center;
     }
@@ -56,15 +56,16 @@
     #quote-text {
       color: var(--color);
       font-family: var(--font);
-      font-size: clamp(0.95rem, 3vw, 1.4rem);
+      font-size: var(--fontsize);
       font-style: normal;
       line-height: 1.7;
+      text-wrap: balance;
     }
 
     #quote-author {
       color: var(--color);
       font-family: var(--font);
-      font-size: clamp(0.75rem, 2vw, 1rem);
+      font-size: calc(var(--fontsize) * 0.75);
       font-style: normal;
       margin-top: 0.9em;
       letter-spacing: 0.03em;
@@ -90,6 +91,9 @@
      *
      * font    Font-family string.
      *         Example: font=Arial  font=Georgia
+     *
+     * fontsize  Font size for quote text (CSS value).
+     *           Example: fontsize=1.2rem  fontsize=18px  fontsize=2vw
      * ──────────────────────────────────────────────────
      * Double-click anywhere to show the next quote.
      * The daily quote resets automatically at midnight (UTC).
@@ -104,13 +108,15 @@
       return /^[0-9a-fA-F]{3,8}$/.test(v) ? '#' + v : v;
     }
 
-    const color = toColor(params.get('color'));
-    const bg    = toColor(params.get('bg'));
-    const font  = params.get('font');
+    const color    = toColor(params.get('color'));
+    const bg       = toColor(params.get('bg'));
+    const font     = params.get('font');
+    const fontsize = params.get('fontsize');
 
-    if (color) root.style.setProperty('--color', color);
-    if (bg)    root.style.setProperty('--bg', bg);
-    if (font)  root.style.setProperty('--font', font);
+    if (color)    root.style.setProperty('--color', color);
+    if (bg)       root.style.setProperty('--bg', bg);
+    if (font)     root.style.setProperty('--font', font);
+    if (fontsize) root.style.setProperty('--fontsize', fontsize);
 
     // ── Quote selection ──────────────────────────────
 
