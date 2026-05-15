@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clock</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Defaults — overridden by URL params via JS */
+    :root {
+      --color: #111111;
+      --bg: transparent;
+      --font: ui-monospace, 'SF Mono', 'Cascadia Code', 'Segoe UI Mono',
+              'Liberation Mono', 'Courier New', monospace;
+      --size: clamp(1.5rem, 10vw, 4rem);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root { --color: #eeeeee; }
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    #clock {
+      color: var(--color);
+      font-family: var(--font);
+      font-size: var(--size);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+      line-height: 1;
+    }
+
+    /* Blinking colon: visible 0–0.5 s, dim 0.5–1 s */
+    .sep {
+      display: inline-block;
+      animation: blink 1s linear infinite;
+    }
+
+    @keyframes blink {
+      0%,  49.9% { opacity: 1;    }
+      50%, 100%  { opacity: 0.15; }
+    }
+
+    .ampm {
+      font-size: 0.5em;
+      vertical-align: 0.2em;
+      margin-left: 0.25em;
+      font-weight: 400;
+    }
+  </style>
+</head>
+<body>
+  <time id="clock" aria-live="polite"></time>
+
+  <script>
+    /*
+     * URL Parameters
+     * ─────────────────────────────────────────────────────────────
+     * color   Text color. Hex (with or without #) or CSS color name.
+     *         Example: color=ff6b6b  color=%23ff6b6b  color=royalblue
+     *
+     * bg      Background color. Same format as color.
+     *         Example: bg=1a1a2e   bg=white
+     *         (default: transparent — recommended for Notion)
+     *
+     * size    Font size. Plain number = px; any CSS unit accepted.
+     *         Example: size=48   size=3rem   size=5vw
+     *
+     * font    Font-family string.
+     *         Example: font=Georgia  font=Arial
+     *
+     * theme   Override auto dark/light. Values: light | dark
+     *         Example: theme=dark
+     *
+     * tz      IANA timezone.
+     *         Example: tz=Asia/Tokyo  tz=America/New_York  tz=UTC
+     *
+     * seconds Show or hide seconds. Values: 1 (default) | 0
+     *         Example: seconds=0
+     *
+     * h12     12-hour format. Values: 0 (default, 24h) | 1 (12h)
+     *         Example: h12=1
+     * ─────────────────────────────────────────────────────────────
+     */
+
+    const params = new URLSearchParams(location.search);
+    const root   = document.documentElement;
+    const el     = document.getElementById('clock');
+
+    // Accept hex without '#', hex with '#', or any CSS color name.
+    function toColor(v) {
+      if (!v) return null;
+      return /^[0-9a-fA-F]{3,8}$/.test(v) ? '#' + v : v;
+    }
+
+    // Theme preset (applied before explicit color so color wins)
+    const theme = params.get('theme');
+    if (theme === 'light') root.style.setProperty('--color', '#111111');
+    if (theme === 'dark')  root.style.setProperty('--color', '#eeeeee');
+
+    // Individual overrides
+    const color = toColor(params.get('color'));
+    const bg    = toColor(params.get('bg'));
+    const size  = params.get('size');
+    const font  = params.get('font');
+
+    if (color) root.style.setProperty('--color', color);
+    if (bg)    root.style.setProperty('--bg', bg);
+    if (font)  root.style.setProperty('--font', font);
+    if (size) {
+      // Plain number → treat as px; otherwise use as-is (rem, em, vw …)
+      root.style.setProperty('--size', /^\d+(\.\d+)?$/.test(size) ? size + 'px' : size);
+    }
+
+    const tz      = params.get('tz') || undefined;
+    const showSec = params.get('seconds') !== '0';
+    const use12h  = params.get('h12') === '1';
+
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      hour:   '2-digit',
+      minute: '2-digit',
+      ...(showSec ? { second: '2-digit' } : {}),
+      hour12:   use12h,
+      timeZone: tz,
+    });
+
+    function tick() {
+      const now   = new Date();
+      const parts = fmt.formatToParts(now);
+      let html = '';
+      for (const { type, value } of parts) {
+        if      (type === 'literal')   html += `<span class="sep">${value}</span>`;
+        else if (type === 'dayPeriod') html += `<span class="ampm">${value}</span>`;
+        else                           html += value;
+      }
+      el.innerHTML = html;
+      el.dateTime  = now.toISOString();
+    }
+
+    tick();
+    // Sync first interval to the next whole second, then run at 1 s.
+    setTimeout(() => { tick(); setInterval(tick, 1000); }, 1000 - Date.now() % 1000);
+  </script>
+</body>
+</html>
