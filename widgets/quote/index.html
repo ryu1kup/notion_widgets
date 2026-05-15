@@ -94,6 +94,9 @@
      *
      * fontsize  Font size for quote text (CSS value).
      *           Example: fontsize=1.2rem  fontsize=18px  fontsize=2vw
+     *
+     * lang      Language for quotes. Default: English.
+     *           Example: lang=jp
      * ──────────────────────────────────────────────────
      * Double-click anywhere to show the next quote.
      * The daily quote resets automatically at midnight (UTC).
@@ -112,11 +115,15 @@
     const bg       = toColor(params.get('bg'));
     const font     = params.get('font');
     const fontsize = params.get('fontsize');
+    const lang     = params.get('lang');
 
     if (color)    root.style.setProperty('--color', color);
     if (bg)       root.style.setProperty('--bg', bg);
     if (font)     root.style.setProperty('--font', font);
     if (fontsize) root.style.setProperty('--fontsize', fontsize);
+    if (lang === 'jp') {
+      root.style.setProperty('--font', "'Hiragino Mincho ProN', 'Yu Mincho', serif");
+    }
 
     // ── Quote selection ──────────────────────────────
 
@@ -154,38 +161,43 @@
 
     // ── Quotes data ─────────────────────────────────
     // Edit this array to add / remove quotes.
-    quotes = [
-      { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-      { text: "In the middle of every difficulty lies opportunity.", author: "Albert Einstein" },
-      { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
-      { text: "Life is what happens when you're busy making other plans.", author: "John Lennon" },
-      { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
-      { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
-      { text: "Imagination is more important than knowledge.", author: "Albert Einstein" },
-      { text: "In order to be irreplaceable, one must always be different.", author: "Coco Chanel" },
-      { text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
-      { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
-      { text: "Whether you think you can or you think you can't, you're right.", author: "Henry Ford" },
-      { text: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky" },
-      { text: "I have not failed. I've just found 10,000 ways that won't work.", author: "Thomas Edison" },
-      { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
-      { text: "The only limit to our realization of tomorrow is our doubts of today.", author: "Franklin D. Roosevelt" },
-      { text: "Do not go where the path may lead, go instead where there is no path and leave a trail.", author: "Ralph Waldo Emerson" },
-      { text: "Spread love everywhere you go. Let no one ever come to you without leaving happier.", author: "Mother Teresa" },
-      { text: "Don't judge each day by the harvest you reap but by the seeds that you plant.", author: "Robert Louis Stevenson" },
-      { text: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb" },
-      { text: "An unexamined life is not worth living.", author: "Socrates" },
-      { text: "You will face many defeats in life, but never let yourself be defeated.", author: "Maya Angelou" },
-      { text: "In the end, it's not the years in your life that count. It's the life in your years.", author: "Abraham Lincoln" },
-      { text: "Never let the fear of striking out keep you from playing the game.", author: "Babe Ruth" },
-      { text: "Life is either a daring adventure or nothing at all.", author: "Helen Keller" },
-      { text: "Many of life's failures are people who did not realize how close they were to success when they gave up.", author: "Thomas Edison" },
-      { text: "You have brains in your head. You have feet in your shoes. You can steer yourself any direction you choose.", author: "Dr. Seuss" },
-      { text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela" },
-      { text: "When you reach the end of your rope, tie a knot in it and hang on.", author: "Franklin D. Roosevelt" },
-      { text: "Always remember that you are absolutely unique. Just like everyone else.", author: "Margaret Mead" },
-      { text: "In three words I can sum up everything I've learned about life: it goes on.", author: "Robert Frost" },
+    const quotesEn = [
+      { text: "The only way to do great work is to love what you do.", textJp: "素晴らしい仕事をする唯一の方法は、自分のやっていることを愛することだ。", author: "Steve Jobs", authorJp: "スティーブ・ジョブズ" },
+      { text: "In the middle of every difficulty lies opportunity.", textJp: "あらゆる困難の中に、機会が潜んでいる。", author: "Albert Einstein", authorJp: "アルベルト・アインシュタイン" },
+      { text: "It does not matter how slowly you go as long as you do not stop.", textJp: "どれほどゆっくり進んでも、止まらない限り問題はない。", author: "Confucius", authorJp: "孔子" },
+      { text: "Life is what happens when you're busy making other plans.", textJp: "人生とは、ほかのことを計画しているときに起きることだ。", author: "John Lennon", authorJp: "ジョン・レノン" },
+      { text: "The future belongs to those who believe in the beauty of their dreams.", textJp: "未来は、自分の夢の美しさを信じる人のものだ。", author: "Eleanor Roosevelt", authorJp: "エレノア・ルーズベルト" },
+      { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", textJp: "成功は終わりではなく、失敗は致命的でもない。大切なのは、続ける勇気だ。", author: "Winston Churchill", authorJp: "ウィンストン・チャーチル" },
+      { text: "Imagination is more important than knowledge.", textJp: "想像力は知識よりも重要だ。", author: "Albert Einstein", authorJp: "アルベルト・アインシュタイン" },
+      { text: "In order to be irreplaceable, one must always be different.", textJp: "唯一無二の存在であるためには、常に人と違っていなければならない。", author: "Coco Chanel", authorJp: "ココ・シャネル" },
+      { text: "The way to get started is to quit talking and begin doing.", textJp: "始める方法は、しゃべるのをやめてやり始めることだ。", author: "Walt Disney", authorJp: "ウォルト・ディズニー" },
+      { text: "Don't watch the clock; do what it does. Keep going.", textJp: "時計を見るな。時計と同じことをしろ。動き続けろ。", author: "Sam Levenson", authorJp: "サム・レベンソン" },
+      { text: "Whether you think you can or you think you can't, you're right.", textJp: "できると思えばできる、できないと思えばできない。どちらも正しい。", author: "Henry Ford", authorJp: "ヘンリー・フォード" },
+      { text: "You miss 100% of the shots you don't take.", textJp: "打たないシュートは、100%外れる。", author: "Wayne Gretzky", authorJp: "ウェイン・グレツキー" },
+      { text: "I have not failed. I've just found 10,000 ways that won't work.", textJp: "私は失敗していない。うまくいかない方法を1万通り発見しただけだ。", author: "Thomas Edison", authorJp: "トーマス・エジソン" },
+      { text: "It always seems impossible until it's done.", textJp: "物事はやり遂げるまで、いつも不可能に見えるものだ。", author: "Nelson Mandela", authorJp: "ネルソン・マンデラ" },
+      { text: "The only limit to our realization of tomorrow is our doubts of today.", textJp: "明日の実現を阻む唯一の限界は、今日の疑念である。", author: "Franklin D. Roosevelt", authorJp: "フランクリン・D・ルーズベルト" },
+      { text: "Do not go where the path may lead, go instead where there is no path and leave a trail.", textJp: "道のある所へ行くな。道のない所へ行き、足跡を残せ。", author: "Ralph Waldo Emerson", authorJp: "ラルフ・ウォルドー・エマーソン" },
+      { text: "Spread love everywhere you go. Let no one ever come to you without leaving happier.", textJp: "行く先々で愛を広めなさい。あなたのもとを離れる人が、必ず幸せになれるように。", author: "Mother Teresa", authorJp: "マザー・テレサ" },
+      { text: "Don't judge each day by the harvest you reap but by the seeds that you plant.", textJp: "毎日を、収穫した実ではなく、蒔いた種で評価しなさい。", author: "Robert Louis Stevenson", authorJp: "ロバート・ルイス・スティーヴンソン" },
+      { text: "The best time to plant a tree was 20 years ago. The second best time is now.", textJp: "木を植える最良の時は20年前だった。次に良い時は今だ。", author: "Chinese Proverb", authorJp: "中国のことわざ" },
+      { text: "An unexamined life is not worth living.", textJp: "省みない人生は、生きるに値しない。", author: "Socrates", authorJp: "ソクラテス" },
+      { text: "You will face many defeats in life, but never let yourself be defeated.", textJp: "人生で多くの敗北を経験するだろう。しかし、決して敗北に打ちのめされてはいけない。", author: "Maya Angelou", authorJp: "マヤ・アンジェロウ" },
+      { text: "In the end, it's not the years in your life that count. It's the life in your years.", textJp: "大切なのは、人生の長さではなく、人生の中身だ。", author: "Abraham Lincoln", authorJp: "エイブラハム・リンカーン" },
+      { text: "Never let the fear of striking out keep you from playing the game.", textJp: "三振を恐れて、試合に出ることをやめるな。", author: "Babe Ruth", authorJp: "ベーブ・ルース" },
+      { text: "Life is either a daring adventure or nothing at all.", textJp: "人生は大胆な冒険か、それとも無かのどちらかだ。", author: "Helen Keller", authorJp: "ヘレン・ケラー" },
+      { text: "Many of life's failures are people who did not realize how close they were to success when they gave up.", textJp: "人生における多くの失敗者は、諦めた時にどれほど成功に近づいていたか気づいていない人たちだ。", author: "Thomas Edison", authorJp: "トーマス・エジソン" },
+      { text: "You have brains in your head. You have feet in your shoes. You can steer yourself any direction you choose.", textJp: "あなたには頭がある。靴の中には足がある。自分が選んだどの方向にでも進める。", author: "Dr. Seuss", authorJp: "ドクター・スース" },
+      { text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", textJp: "人生最大の栄光は、決して倒れないことではなく、倒れるたびに起き上がることだ。", author: "Nelson Mandela", authorJp: "ネルソン・マンデラ" },
+      { text: "When you reach the end of your rope, tie a knot in it and hang on.", textJp: "ロープの端まで来たら、結び目を作ってしがみつけ。", author: "Franklin D. Roosevelt", authorJp: "フランクリン・D・ルーズベルト" },
+      { text: "Always remember that you are absolutely unique. Just like everyone else.", textJp: "あなたは絶対に唯一無二の存在だ。他のみんなと同じように。", author: "Margaret Mead", authorJp: "マーガレット・ミード" },
+      { text: "In three words I can sum up everything I've learned about life: it goes on.", textJp: "人生について学んだすべてを三語で言い表せる。それは続いていく。", author: "Robert Frost", authorJp: "ロバート・フロスト" },
     ];
+
+    quotes = quotesEn.map(q => lang === 'jp'
+      ? { text: q.textJp, author: q.authorJp }
+      : q
+    );
 
     showQuote(dailyIndex(quotes.length));
   </script>
